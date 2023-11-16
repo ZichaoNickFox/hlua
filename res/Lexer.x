@@ -1,43 +1,22 @@
 {
 module Lexer where
 
-type AlexInput =
-  ( Char      -- previous char
-  , [Byte]    -- rest of the bytes for the current char
-  , String    -- rest of the input string
-  )
-
-alexGetByte :: AlexInput -> Maybe (Byte, AlexInput)
-alexGetByte (c, b:bs, s  ) = Just (b, (c, bs, s))
-alexGetByte (c, []  , [] ) = Nothing
-alexGetByte (_, []  , c:s) = case utf8Encode c of
-                               b:bs -> Just (b, (c, bs, s))
-
-alexInputPrevChar :: AlexInput -> Char
-alexInputPrevChar (c, _, _) = c
-
--- alexScanTokens :: String -> [token]
-alexScanTokens str = go ('\n', [], str)
-  where
-    go inp@(_,_bs,str) =
-      case alexScan inp 0 of
-        AlexEOF                -> []
-        AlexSkip  inp' len     -> go inp'
-        AlexToken inp' len act -> act (take len str) : go inp'
-        AlexError _            -> error "lexical error"
-
+import Data.Word (Word8)
+import BNFC.Lex (utf8Encode)
+import Data.Maybe (Maybe(Just, Nothing))
 }
 
 $digit      = [0 - 9]
 $alpha      = [a-zA-Z]
 @identifier = [a-zA-Z_][a-zA-Z0-9_]*
+@string     = \\\"([^\\\"])*\\\"
 
 tokens :-
   -- whitespace
-  $white+               ;
+  $white+       ;
 
   -- comment
-  "--" [^\n]*           ;
+  "--" [^\n]*   ;
 
   -- keyword
   "function"    { \_ -> TokenFunction }
@@ -50,7 +29,6 @@ tokens :-
   "elseif"      { \_ -> TokenElseif }
   "for"         { \_ -> TokenFor }
   "goto"        { \_ -> TokenGoto }
-  "if"          { \_ -> TokenIf }
   "in"          { \_ -> TokenIn }
   "local"       { \_ -> TokenLocal }
   "nil"         { \_ -> TokenNil }
@@ -65,7 +43,65 @@ tokens :-
   "while"       { \_ -> TokenWhile }
 
   -- identifier
-  @identifier   { \_ -> TokenVariable }
+  @identifier   { \str -> TokenIdentifier str }
+  @string       { \str -> TokenString str }
   "["           { \_ -> TokenBracketOpen }
   "]"           { \_ -> TokenBracketClose }
   "."           { \_ -> TokenDot }
+
+{
+data Token = TokenFunction
+  | TokenEnd
+  | TokenAnd
+  | TokenBreak
+  | TokenDo
+  | TokenIf
+  | TokenElse
+  | TokenElseif
+  | TokenFor
+  | TokenGoto
+  | TokenIn
+  | TokenLocal
+  | TokenNil
+  | TokenNot
+  | TokenOr
+  | TokenRepeat
+  | TokenReturn
+  | TokenThen
+  | TokenTrue
+  | TokenFalse
+  | TokenUntil
+  | TokenWhile
+  | TokenIdentifier String
+  | TokenString String
+  | TokenBracketOpen
+  | TokenBracketClose
+  | TokenDot
+
+type Byte = Word8
+
+type AlexInput =
+  ( Char      -- previous char
+  , [Byte]    -- rest of the bytes for the current char
+  , String    -- rest of the input string
+  )
+
+alexGetByte :: AlexInput -> Maybe (Byte, AlexInput)
+alexGetByte (c, b:bs, s  ) = Just (b, (c, bs, s))
+alexGetByte (c, []  , [] ) = Nothing
+alexGetByte (_, []  , c:s) = case utf8Encode c of
+                              b:bs -> Just (b, (c, bs, s))
+
+alexInputPrevChar :: AlexInput -> Char
+alexInputPrevChar (c, _, _) = c
+
+alexScanTokens :: String -> [Token]
+alexScanTokens str = go ('\n', [], str)
+  where
+    go inp@(_,_bs,str) =
+      case alexScan inp 0 of
+        AlexEOF                -> []
+        AlexSkip  inp' len     -> go inp'
+        AlexToken inp' len act -> act (take len str) : go inp'
+        AlexError _            -> error "lexical error"
+}
