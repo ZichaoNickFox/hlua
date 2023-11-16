@@ -1,7 +1,8 @@
 {-# OPTIONS_GHC -fno-warn-unused-binds -fno-warn-missing-signatures #-}
 {-# LANGUAGE CPP #-}
-{-# LINE 1 "lexer.x" #-}
-module Main (main) where
+-- {-# LINE 1 "Lexer.x" #-}
+module Lexer where
+  
 #if __GLASGOW_HASKELL__ >= 603
 #include "ghcconfig.h"
 #elif defined(__GLASGOW_HASKELL__)
@@ -12,6 +13,31 @@ import Data.Array
 #else
 import Array
 #endif
+
+type AlexInput =
+  ( Char      -- previous char
+  , [Byte]    -- rest of the bytes for the current char
+  , String    -- rest of the input string
+  )
+
+alexGetByte :: AlexInput -> Maybe (Byte, AlexInput)
+alexGetByte (c, b:bs, s  ) = Just (b, (c, bs, s))
+alexGetByte (c, []  , [] ) = Nothing
+alexGetByte (_, []  , c:s) = case utf8Encode c of
+                               b:bs -> Just (b, (c, bs, s))
+
+alexInputPrevChar :: AlexInput -> Char
+alexInputPrevChar (c, _, _) = c
+
+-- alexScanTokens :: String -> [token]
+alexScanTokens str = go ('\n', [], str)
+  where
+    go inp@(_,_bs,str) =
+      case alexScan inp 0 of
+        AlexEOF                -> []
+        AlexSkip  inp' len     -> go inp'
+        AlexToken inp' len act -> act (take len str) : go inp'
+        AlexError _            -> error "lexical error"
 alex_tab_size :: Int
 alex_tab_size = 8
 alex_base :: Array Int Int

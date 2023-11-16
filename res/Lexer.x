@@ -1,5 +1,31 @@
 {
-  module Main (main) where
+module Lexer where
+
+type AlexInput =
+  ( Char      -- previous char
+  , [Byte]    -- rest of the bytes for the current char
+  , String    -- rest of the input string
+  )
+
+alexGetByte :: AlexInput -> Maybe (Byte, AlexInput)
+alexGetByte (c, b:bs, s  ) = Just (b, (c, bs, s))
+alexGetByte (c, []  , [] ) = Nothing
+alexGetByte (_, []  , c:s) = case utf8Encode c of
+                               b:bs -> Just (b, (c, bs, s))
+
+alexInputPrevChar :: AlexInput -> Char
+alexInputPrevChar (c, _, _) = c
+
+-- alexScanTokens :: String -> [token]
+alexScanTokens str = go ('\n', [], str)
+  where
+    go inp@(_,_bs,str) =
+      case alexScan inp 0 of
+        AlexEOF                -> []
+        AlexSkip  inp' len     -> go inp'
+        AlexToken inp' len act -> act (take len str) : go inp'
+        AlexError _            -> error "lexical error"
+
 }
 
 $digit      = [0 - 9]

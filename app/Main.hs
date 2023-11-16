@@ -1,6 +1,9 @@
 module Main (main) where
 
-import Lib
+import Lexer.Lexer
 
 main :: IO ()
-main = someFunc
+main = do
+  putStrLn "a"
+  _ <- getChar
+  putStrLn "exit"
