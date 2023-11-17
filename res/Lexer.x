@@ -1,15 +1,18 @@
 {
 module Lexer where
 
-import Data.Word (Word8)
-import BNFC.Lex (utf8Encode)
 import Data.Maybe (Maybe(Just, Nothing))
+import BNFC.Lex (utf8Encode)
 }
 
-$digit      = [0 - 9]
 $alpha      = [a-zA-Z]
 @identifier = [a-zA-Z_][a-zA-Z0-9_]*
 @string     = \\\"([^\\\"])*\\\"
+$digit      = [0 - 9]
+@float1     = $digit+ \. $digit+
+@float2     = $digit+ \.
+@float3     = \. $digit+
+@integer    = $digit+
 
 tokens :-
   -- whitespace
@@ -45,12 +48,26 @@ tokens :-
   -- identifier
   @identifier   { \str -> TokenIdentifier str }
   @string       { \str -> TokenString str }
+  @integer      { \str -> TokenInteger (fromIntegral $ read str :: Integer) }
+  @float1       { \str -> TokenFloat (read str :: Float) }
+  @float2       { \str -> TokenFloat (read str :: Float) }
+  @float3       { \str -> TokenFloat (read str :: Float) }
   "["           { \_ -> TokenBracketOpen }
   "]"           { \_ -> TokenBracketClose }
+  "("           { \_ -> TokenParenthesesOpen }
+  ")"           { \_ -> TokenParenthesesClose }
+  "{"           { \_ -> TokenBraceOpen }
+  "}"           { \_ -> TokenBraceClose }
   "."           { \_ -> TokenDot }
+  "="           { \_ -> TokenAssign }
+  "+"           { \_ -> TokenAdd }
+  "-"           { \_ -> TokenMinus }
+  "*"           { \_ -> TokenMutiply }
+  "/"           { \_ -> TokenDevide }
 
 {
-data Token = TokenFunction
+data Token = 
+    TokenFunction
   | TokenEnd
   | TokenAnd
   | TokenBreak
@@ -74,11 +91,20 @@ data Token = TokenFunction
   | TokenWhile
   | TokenIdentifier String
   | TokenString String
+  | TokenInteger Integer
+  | TokenFloat Float
   | TokenBracketOpen
   | TokenBracketClose
+  | TokenParenthesesOpen
+  | TokenParenthesesClose
+  | TokenBraceOpen
+  | TokenBraceClose
   | TokenDot
-
-type Byte = Word8
+  | TokenAssign
+  | TokenAdd
+  | TokenMinus
+  | TokenMutiply
+  | TokenDevide deriving (Eq)
 
 type AlexInput =
   ( Char      -- previous char
@@ -90,12 +116,12 @@ alexGetByte :: AlexInput -> Maybe (Byte, AlexInput)
 alexGetByte (c, b:bs, s  ) = Just (b, (c, bs, s))
 alexGetByte (c, []  , [] ) = Nothing
 alexGetByte (_, []  , c:s) = case utf8Encode c of
-                              b:bs -> Just (b, (c, bs, s))
+                               b:bs -> Just (b, (c, bs, s))
 
 alexInputPrevChar :: AlexInput -> Char
 alexInputPrevChar (c, _, _) = c
 
-alexScanTokens :: String -> [Token]
+-- alexScanTokens :: String -> [token]
 alexScanTokens str = go ('\n', [], str)
   where
     go inp@(_,_bs,str) =

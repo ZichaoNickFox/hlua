@@ -73,6 +73,7 @@ test-suite hlua-test
   ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wmissing-export-lists -Wmissing-home-modules -Wpartial-fields -Wredundant-constraints -threaded -rtsopts -with-rtsopts=-N
   build-depends:
       BNFC >=2.9.5
+    , HUnit
     , array >=0.5.4.0
     , base >=4.7 && <5
     , hlua
