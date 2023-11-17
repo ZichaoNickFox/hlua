@@ -3,6 +3,11 @@ module Lexer where
 
 import Data.Maybe (Maybe(Just, Nothing))
 import BNFC.Lex (utf8Encode)
+import Data.Word (Word8)
+import Data.Char (chr)
+import Debug.Trace (trace)
+
+#define ALEX_DEBUG 1
 }
 
 $alpha      = [a-zA-Z]
@@ -104,7 +109,9 @@ data Token =
   | TokenAdd
   | TokenMinus
   | TokenMutiply
-  | TokenDevide deriving (Eq)
+  | TokenDevide deriving (Eq, Show)
+
+type Byte = Word8
 
 type AlexInput =
   ( Char      -- previous char

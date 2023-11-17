@@ -5,6 +5,11 @@ module Lexer where
 
 import Data.Maybe (Maybe(Just, Nothing))
 import BNFC.Lex (utf8Encode)
+import Data.Word (Word8)
+import Data.Char (chr)
+import Debug.Trace (trace)
+
+#define ALEX_DEBUG 1
 #if __GLASGOW_HASKELL__ >= 603
 #include "ghcconfig.h"
 #elif defined(__GLASGOW_HASKELL__)
@@ -16408,7 +16413,7 @@ alex_scan_tkn user__ orig_input len input__ s last_acc =
      Nothing -> (new_acc, input__)
      Just (c, new_input) ->
 #ifdef ALEX_DEBUG
-      trace ("State: " ++ show IBOX(s) ++ ", char: " ++ show c) $
+      trace ("State: " ++ show IBOX(s) ++ ", char: " ++ show c ++ " " ++ (show . chr . fromIntegral) c) $
 #endif
       case fromIntegral c of { IBOX(ord_c) ->
         let
@@ -16490,7 +16495,7 @@ alexRightContext IBOX(sc) user__ _ _ input__ =
         -- match when checking the right context, just
         -- the first match will do.
 #endif
-{-# LINE 68 "Lexer.x" #-}
+{-# LINE 73 "Lexer.x" #-}
 data Token = 
     TokenFunction
   | TokenEnd
@@ -16529,7 +16534,9 @@ data Token =
   | TokenAdd
   | TokenMinus
   | TokenMutiply
-  | TokenDevide deriving (Eq)
+  | TokenDevide deriving (Eq, Show)
+
+type Byte = Word8
 
 type AlexInput =
   ( Char      -- previous char
