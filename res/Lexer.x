@@ -12,7 +12,7 @@ import Debug.Trace (trace)
 
 $alpha      = [a-zA-Z]
 @identifier = [a-zA-Z_][a-zA-Z0-9_]*
-@string     = \\\"([^\\\"])*\\\"
+@string     = \"([^\"]|\\.)*\"
 $digit      = [0 - 9]
 @float1     = $digit+ \. $digit+
 @float2     = $digit+ \.
@@ -52,7 +52,7 @@ tokens :-
 
   -- identifier
   @identifier   { \str -> TokenIdentifier str }
-  @string       { \str -> TokenString str }
+  @string       { \str -> TokenString $ (drop 1 . init) str }
   @integer      { \str -> TokenInteger (fromIntegral $ read str :: Integer) }
   @float1       { \str -> TokenFloat (read str :: Float) }
   @float2       { \str -> TokenFloat (read str :: Float) }
