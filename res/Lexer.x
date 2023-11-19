@@ -6,18 +6,23 @@ import BNFC.Lex (utf8Encode)
 import Data.Word (Word8)
 import Data.Char (chr)
 import Debug.Trace (trace)
+import Numeric (readHex)
 
 #define ALEX_DEBUG 1
 }
 
 $alpha      = [a-zA-Z]
+$digit      = [0-9]
+$hexdigit   = [0-9A-Fa-f]
+
 @identifier = [a-zA-Z_][a-zA-Z0-9_]*
 @string     = \"([^\"]|\\.)*\"
-$digit      = [0 - 9]
-@float1     = $digit+ \. $digit+
-@float2     = $digit+ \.
-@float3     = \. $digit+
-@integer    = $digit+
+
+@integer1   = "0x" $hexdigit+
+@integer2   = $digit+
+
+@float1     = $digit+ \. $digit+ ([eE] [\+\-]? $digit+)?
+@float2     = $digit+ [eE] [\+\-]? $digit+
 
 tokens :-
   -- whitespace
@@ -27,89 +32,175 @@ tokens :-
   "--" [^\n]*   ;
 
   -- keyword
-  "function"    { \_ -> TokenFunction }
-  "end"         { \_ -> TokenEnd }
-  "if"          { \_ -> TokenIf }
-  "and"         { \_ -> TokenAnd }
-  "break"       { \_ -> TokenBreak }
-  "do"          { \_ -> TokenDo }
-  "else"        { \_ -> TokenElse }
-  "elseif"      { \_ -> TokenElseif }
-  "for"         { \_ -> TokenFor }
-  "goto"        { \_ -> TokenGoto }
-  "in"          { \_ -> TokenIn }
-  "local"       { \_ -> TokenLocal }
-  "nil"         { \_ -> TokenNil }
-  "not"         { \_ -> TokenNot }
-  "or"          { \_ -> TokenOr }
-  "repeat"      { \_ -> TokenRepeat }
-  "return"      { \_ -> TokenReturn }
-  "then"        { \_ -> TokenThen }
-  "true"        { \_ -> TokenTrue }
-  "false"       { \_ -> TokenFalse }
-  "until"       { \_ -> TokenUntil }
-  "while"       { \_ -> TokenWhile }
+  -- https://www.lua.org/manual/5.4/manual.html#3.1
+  -- and       break     do        else      elseif    end
+  -- false     for       function  goto      if        in
+  -- local     nil       not       or        repeat    return
+  -- then      true      until     while
+  "and"           { \_ -> TokenAnd }
+  "break"         { \_ -> TokenBreak }
+  "do"            { \_ -> TokenDo }
+  "else"          { \_ -> TokenElse }
+  "elseif"        { \_ -> TokenElseif }
+  "end"           { \_ -> TokenEnd }
+
+  "false"         { \_ -> TokenFalse }
+  "for"           { \_ -> TokenFor }
+  "function"      { \_ -> TokenFunction }
+  "goto"          { \_ -> TokenGoto }
+  "if"            { \_ -> TokenIf }
+  "in"            { \_ -> TokenIn }
+
+  "local"         { \_ -> TokenLocal }
+  "nil"           { \_ -> TokenNil }
+  "not"           { \_ -> TokenNot }
+  "or"            { \_ -> TokenOr }
+  "repeat"        { \_ -> TokenRepeat }
+  "return"        { \_ -> TokenReturn }
+
+  "then"          { \_ -> TokenThen }
+  "true"          { \_ -> TokenTrue }
+  "until"         { \_ -> TokenUntil }
+  "while"         { \_ -> TokenWhile }
+
+  -- https://www.lua.org/manual/5.4/manual.html#3.1
+  -- Other tokens
+  -- +     -     *     /     %     ^     #
+  -- &     ~     |     <<    >>    //
+  -- ==    ~=    <=    >=    <     >     =
+  -- (     )     {     }     [     ]     ::
+  -- ;     :     ,     .     ..    ...
+  "+"             { \_ -> TokenAdd }
+  "-"             { \_ -> TokenMinus }
+  "*"             { \_ -> TokenMutiply }
+  "/"             { \_ -> TokenDevide }
+  "%"             { \_ -> TokenModulus }
+  "^"             { \_ -> TokenPower }
+  "#"             { \_ -> TokenLength }
+
+  "&"             { \_ -> TokenBitwiseAnd }
+  "~"             { \_ -> TokenBitwiseNot }
+  "|"             { \_ -> TokenBitwiseOr }
+  "<<"            { \_ -> TokenLeftShift }
+  ">>"            { \_ -> TokenRightShift }
+  "//"            { \_ -> TokenFloorDivision }
+
+  "=="            { \_ -> TokenEquals }
+  "~="            { \_ -> TokenNotEquals }
+  "<="            { \_ -> TokenLessThanEquals }
+  ">="            { \_ -> TokenGreaterThanEquals }
+  "<"             { \_ -> TokenLessThan }
+  ">"             { \_ -> TokenGreaterThan }
+  "="             { \_ -> TokenAssign }
+
+  "("             { \_ -> TokenLeftParentheses }
+  ")"             { \_ -> TokenRightParentheses }
+  "{"             { \_ -> TokenLeftBrace }
+  "}"             { \_ -> TokenRightBrace }
+  "["             { \_ -> TokenLeftBracket }
+  "]"             { \_ -> TokenRightBracket }
+  "::"            { \_ -> TokenDoubleColon }
+
+  ";"             { \_ -> TokenSemicolon }
+  ":"             { \_ -> TokenColon }
+  ","             { \_ -> TokenComma }
+  "."             { \_ -> TokenDot }
+  ".."            { \_ -> TokenConcat }
+  "..."           { \_ -> TokenVararg }
+
+  -- integer
+  -- https://www.lua.org/manual/5.4/manual.html#3.1
+  @integer1       { \s -> TokenInteger (fst $ head $ readHex s) }
+  @integer2       { \s -> TokenInteger (read s) }
+
+  -- float
+  -- https://www.lua.org/manual/5.4/manual.html#3.1
+  @float1         { \str -> TokenFloat (read str :: Float) }
+  @float2         { \str -> TokenFloat (read str :: Float) }
 
   -- identifier
-  @identifier   { \str -> TokenIdentifier str }
-  @string       { \str -> TokenString $ (drop 1 . init) str }
-  @integer      { \str -> TokenInteger (fromIntegral $ read str :: Integer) }
-  @float1       { \str -> TokenFloat (read str :: Float) }
-  @float2       { \str -> TokenFloat (read str :: Float) }
-  @float3       { \str -> TokenFloat (read str :: Float) }
-  "["           { \_ -> TokenBracketOpen }
-  "]"           { \_ -> TokenBracketClose }
-  "("           { \_ -> TokenParenthesesOpen }
-  ")"           { \_ -> TokenParenthesesClose }
-  "{"           { \_ -> TokenBraceOpen }
-  "}"           { \_ -> TokenBraceClose }
-  "."           { \_ -> TokenDot }
-  "="           { \_ -> TokenAssign }
-  "+"           { \_ -> TokenAdd }
-  "-"           { \_ -> TokenMinus }
-  "*"           { \_ -> TokenMutiply }
-  "/"           { \_ -> TokenDevide }
+  @identifier     { \str -> TokenIdentifier str }
+  @string         { \str -> TokenString $ (drop 1 . init) str }
 
 {
 data Token = 
-    TokenFunction
-  | TokenEnd
-  | TokenAnd
+  -- keyword
+    TokenAnd
   | TokenBreak
   | TokenDo
-  | TokenIf
   | TokenElse
   | TokenElseif
+  | TokenEnd
+
+  | TokenFalse
   | TokenFor
+  | TokenFunction
   | TokenGoto
+  | TokenIf
   | TokenIn
+
   | TokenLocal
   | TokenNil
   | TokenNot
   | TokenOr
   | TokenRepeat
   | TokenReturn
+
   | TokenThen
   | TokenTrue
-  | TokenFalse
   | TokenUntil
   | TokenWhile
-  | TokenIdentifier String
-  | TokenString String
-  | TokenInteger Integer
-  | TokenFloat Float
-  | TokenBracketOpen
-  | TokenBracketClose
-  | TokenParenthesesOpen
-  | TokenParenthesesClose
-  | TokenBraceOpen
-  | TokenBraceClose
-  | TokenDot
-  | TokenAssign
+
+  -- Other tokens
   | TokenAdd
   | TokenMinus
   | TokenMutiply
-  | TokenDevide deriving (Eq, Show)
+  | TokenDevide
+  | TokenModulus
+  | TokenPower
+  | TokenLength
+
+  | TokenBitwiseAnd
+  | TokenBitwiseNot
+  | TokenBitwiseOr
+  | TokenLeftShift
+  | TokenRightShift
+  | TokenFloorDivision
+
+  | TokenEquals
+  | TokenNotEquals
+  | TokenLessThanEquals
+  | TokenGreaterThanEquals
+  | TokenLessThan
+  | TokenGreaterThan
+  | TokenAssign
+
+  | TokenLeftParentheses
+  | TokenRightParentheses
+  | TokenLeftBrace
+  | TokenRightBrace
+  | TokenLeftBracket
+  | TokenRightBracket
+  | TokenDoubleColon
+
+  | TokenSemicolon
+  | TokenColon
+  | TokenComma
+  | TokenDot
+  | TokenConcat
+  | TokenVararg
+
+  -- integer
+  | TokenInteger Integer
+
+  -- float
+  | TokenFloat Float
+
+  -- identifier
+  | TokenIdentifier String
+  | TokenString String
+
+  deriving (Eq, Show)
 
 type Byte = Word8
 
