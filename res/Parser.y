@@ -112,15 +112,15 @@ import Lexer
 	-- block ::= {stat} [retstat]
   Block : StatList Retstat { BlockStatListRetstat $1 $2 }
         | StatList          { BlockStatList $1 }
+        | { BlockEmpty }
   StatList : Stat { StatListSingle $1 }
            | Stat StatList { StatListCons $1 $2 }
-           |               { StatListEmpty }
 
 	-- stat ::=  ';' | 
 	-- 	 varlist '=' explist | 
 	-- 	 functioncall | 
 	-- 	 label | 
-	-- 	 break | 
+	-- 	 break |
 	-- 	 goto Name | 
 	-- 	 do block end | 
 	-- 	 while exp do block end | 
@@ -131,7 +131,7 @@ import Lexer
 	-- 	 function funcname funcbody | 
 	-- 	 local function Name funcbody | 
 	-- 	 local attnamelist ['=' explist] 
-  Stat : ';' { StatEmpty }
+  Stat : ';' { StatSemicolonEmpty }
        | Varlist '=' Explist { StatAssignment $1 $3 }
        | Functioncall { StatFunctionCall $1 }
        | Label { StatLabel $1 }
@@ -141,8 +141,6 @@ import Lexer
        | "while" Exp "do" Block "end" { StatWhile $2 $4 }
        | "repeat" Block "until" Exp { StatRepeat $2 $4 }
        | "if" Exp "then" Block ElseIfList ElseBlock "end" { StatIf $2 $4 $5 $6 }
-       | "if" Exp "then" Block "else" Block "end" { StatIfElse $2 $4 $6 }
-       | "if" Exp "then" Block "elseif" Block "end" { StatIfElse $2 $4 $6 }
        | "for" Name '=' Exp ',' Exp ',' Exp "do" Block "end" { StatForNumeric $2 $4 $6 $8 }
        | "for" Name '=' Exp ',' Exp "do" Block "end" { StatForNumericSimple $2 $4 $6 }
        | "for" Namelist "in" Explist "do" Block "end" { StatForEach $2 $4 $6 }
@@ -150,9 +148,9 @@ import Lexer
        | "local" "function" Name Funcbody { StatLocalFunction $3 $4 }
        | "local" Attnamelist '=' Explist { StatLocalAttribNameList $2 $4 }
        | "local" Attnamelist { StatLocalAttribNameListSimple $2 }
-  ElseIfList : { StatEmpty }
-             | ElseIfList "elseif" Exp "then" Block { ElseIfListAppend $1 $3 $5 }
-  ElseBlock : { StatEmpty }
+  ElseIfList : { EmptyElseIfList }
+             | "elseif" Exp "then" Block ElseIfList { ElseIfListAppend $2 $4 $5 }
+  ElseBlock : { EmptyElseBlock }
             | "else" Block { ElseBlock $2 }
 
 	-- attnamelist ::=  Name attrib {',' Name attrib}
