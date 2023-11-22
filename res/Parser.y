@@ -112,7 +112,6 @@ import Lexer
 	-- block ::= {stat} [retstat]
   Block : StatList Retstat { BlockStatListRetstat $1 $2 }
         | StatList          { BlockStatList $1 }
-        | { BlockEmpty }
   StatList : Stat { StatListSingle $1 }
            | Stat StatList { StatListCons $1 $2 }
 
@@ -120,7 +119,7 @@ import Lexer
 	-- 	 varlist '=' explist | 
 	-- 	 functioncall | 
 	-- 	 label | 
-	-- 	 break |
+	-- 	 break | 
 	-- 	 goto Name | 
 	-- 	 do block end | 
 	-- 	 while exp do block end | 
