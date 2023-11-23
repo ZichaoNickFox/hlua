@@ -1,6 +1,8 @@
 {
 module Parser where
 import Lexer
+
+#define HAPPY_DEBUG 1
 }
 
 %name parse
@@ -20,31 +22,31 @@ import Lexer
   -- false     for       function  goto      if        in
   -- local     nil       not       or        repeat    return
   -- then      true      until     while
-  "and"           { TokenAnd }
-  "break"         { TokenBreak }
-  "do"            { TokenDo }
-  "else"          { TokenElse }
-  "elseif"        { TokenElseif }
-  "end"           { TokenEnd }
+  "and"           { TokenAnd }                -- 1
+  "break"         { TokenBreak }              -- 2
+  "do"            { TokenDo }                 -- 3
+  "else"          { TokenElse }               -- 4
+  "elseif"        { TokenElseif }             -- 5
+  "end"           { TokenEnd }                -- 6
 
-  "false"         { TokenFalse }
-  "for"           { TokenFor }
-  "function"      { TokenFunction }
-  "goto"          { TokenGoto }
-  "if"            { TokenIf }
-  "in"            { TokenIn }
+  "false"         { TokenFalse }              -- 7
+  "for"           { TokenFor }                -- 8
+  "function"      { TokenFunction }           -- 9
+  "goto"          { TokenGoto }               -- 10
+  "if"            { TokenIf }                 -- 11
+  "in"            { TokenIn }                 -- 12
 
-  "local"         { TokenLocal }
-  "nil"           { TokenNil }
-  "not"           { TokenNot }
-  "or"            { TokenOr }
-  "repeat"        { TokenRepeat }
-  "return"        { TokenReturn }
+  "local"         { TokenLocal }              -- 13
+  "nil"           { TokenNil }                -- 14
+  "not"           { TokenNot }                -- 15
+  "or"            { TokenOr }                 -- 16
+  "repeat"        { TokenRepeat }             -- 17
+  "return"        { TokenReturn }             -- 18
 
-  "then"          { TokenThen }
-  "true"          { TokenTrue }
-  "until"         { TokenUntil }
-  "while"         { TokenWhile }
+  "then"          { TokenThen }               -- 19
+  "true"          { TokenTrue }               -- 20
+  "until"         { TokenUntil }              -- 21
+  "while"         { TokenWhile }              -- 22
 
   -- https://www.lua.org/manual/5.4/manual.html#3.1
   -- Other tokens
@@ -53,55 +55,55 @@ import Lexer
   -- ==    ~=    <=    >=    <     >     =
   -- (     )     {     }     [     ]     ::
   -- ;     :     ,     .     ..    ...
-  '+'             { TokenAdd }
-  '-'             { TokenMinus }
-  '*'             { TokenMutiply }
-  '/'             { TokenDevide }
-  '%'             { TokenModulus }
-  '^'             { TokenPower }
-  '#'             { TokenLength }
+  '+'             { TokenAdd }                -- 23
+  '-'             { TokenMinus }              -- 24
+  '*'             { TokenMutiply }            -- 25
+  '/'             { TokenDevide }             -- 26
+  '%'             { TokenModulus }            -- 27
+  '^'             { TokenPower }              -- 28
+  '#'             { TokenLength }             -- 29
 
-  '&'             { TokenBitwiseAnd }
-  '~'             { TokenBitwiseNot }
-  '|'             { TokenBitwiseOr }
-  "<<"            { TokenLeftShift }
-  ">>"            { TokenRightShift }
-  "//"            { TokenFloorDivision }
+  '&'             { TokenBitwiseAnd }         -- 30
+  '~'             { TokenBitwiseNot }         -- 31
+  '|'             { TokenBitwiseOr }          -- 32
+  "<<"            { TokenLeftShift }          -- 33
+  ">>"            { TokenRightShift }         -- 34
+  "//"            { TokenFloorDivision }      -- 35
 
-  "=="            { TokenEquals }
-  "~="            { TokenNotEquals }
-  "<="            { TokenLessThanEquals }
-  ">="            { TokenGreaterThanEquals }
-  '<'             { TokenLessThan }
-  '>'             { TokenGreaterThan }
-  '='             { TokenAssign }
+  "=="            { TokenEquals }             -- 36
+  "~="            { TokenNotEquals }          -- 37
+  "<="            { TokenLessThanEquals }     -- 38
+  ">="            { TokenGreaterThanEquals }  -- 39
+  '<'             { TokenLessThan }           -- 40
+  '>'             { TokenGreaterThan }        -- 41
+  '='             { TokenAssign }             -- 42
 
-  '('             { TokenLeftParentheses }
-  ')'             { TokenRightParentheses }
-  '{'             { TokenLeftBrace }
-  '}'             { TokenRightBrace }
-  '['             { TokenLeftBracket }
-  ']'             { TokenRightBracket }
-  "::"            { TokenDoubleColon }
+  '('             { TokenLeftParentheses }    -- 43
+  ')'             { TokenRightParentheses }   -- 44
+  '{'             { TokenLeftBrace }          -- 45
+  '}'             { TokenRightBrace }         -- 46
+  '['             { TokenLeftBracket }        -- 47
+  ']'             { TokenRightBracket }       -- 48
+  "::"            { TokenDoubleColon }        -- 49
 
-  ';'             { TokenSemicolon }
-  ':'             { TokenColon }
-  ','             { TokenComma }
-  '.'             { TokenDot }
-  ".."            { TokenConcat }
-  "..."           { TokenVararg }
+  ';'             { TokenSemicolon }          -- 50
+  ':'             { TokenColon }              -- 51
+  ','             { TokenComma }              -- 52
+  '.'             { TokenDot }                -- 53
+  ".."            { TokenConcat }             -- 54
+  "..."           { TokenVararg }             -- 55
 
   -- integer
   -- https://www.lua.org/manual/5.4/manual.html#3.1
-  Integer         { TokenInteger $$ }
+  Integer         { TokenInteger $$ }         -- 56
 
   -- float
   -- https://www.lua.org/manual/5.4/manual.html#3.1
-  Float           { TokenFloat $$ }
+  Float           { TokenFloat $$ }           -- 57
 
   -- identifier
-  Name            { TokenIdentifier $$ }
-  LiteralString   { TokenString $$ }
+  Name            { TokenIdentifier $$ }      -- 58
+  LiteralString   { TokenString $$ }          -- 59
 
 -- https://www.lua.org/manual/5.4/manual.html#3.4.8
 %left "or"
@@ -125,7 +127,7 @@ import Lexer
 
 	-- block ::= {stat} [retstat]
   Block : StatList Retstat { BlockStatListRetstat $1 $2 }
-        | StatList          { BlockStatList $1 }
+        | StatList { BlockStatList $1 }
   StatList : Stat { StatListSingle $1 }
            | Stat StatList { StatListCons $1 $2 }
 
@@ -172,6 +174,7 @@ import Lexer
 
 	-- attrib ::= ['<' Name '>']
   Attrib : '<' Name '>' { AttribName $2 }
+         |              { AttribEmpty }
 
 	-- retstat ::= return [explist] [';']
   Retstat : "return" Explist ';' { ReturnStatExplistSimecolon $2 }
@@ -460,6 +463,7 @@ data Grammar =
   | UnopNot
   | UnopLength
   | UnopBitwiseNot
+  deriving (Show)
 
 parseError :: [Token] -> a
 parseError _ = error "Parse error"

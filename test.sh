@@ -7,7 +7,7 @@ if [[ $? -ne 0 ]]; then
 fi
 mv Lexer.hs ../src
 
-happy Parser.x
+happy -d -a -i Parser.x
 if [[ $? -ne 0 ]]; then
   echo "happy Parser.y error"
   exit 1

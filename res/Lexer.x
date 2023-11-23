@@ -8,7 +8,7 @@ import Data.Char (chr)
 import Debug.Trace (trace)
 import Numeric (readHex)
 
-#define ALEX_DEBUG 1
+#undef ALEX_DEBUG
 }
 
 $alpha      = [a-zA-Z]

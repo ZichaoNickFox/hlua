@@ -10,7 +10,7 @@ import Data.Char (chr)
 import Debug.Trace (trace)
 import Numeric (readHex)
 
-#define ALEX_DEBUG 1
+#undef ALEX_DEBUG
 #if __GLASGOW_HASKELL__ >= 603
 #include "ghcconfig.h"
 #elif defined(__GLASGOW_HASKELL__)
