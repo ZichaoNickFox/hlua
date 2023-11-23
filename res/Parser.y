@@ -103,7 +103,21 @@ import Lexer
   Name            { TokenIdentifier $$ }
   LiteralString   { TokenString $$ }
 
+-- https://www.lua.org/manual/5.4/manual.html#3.4.8
+%left "or"
+%left "and"
+%nonassoc '>' '<' "<=" ">=" "~=" "=="
+%left '|'
+%nonassoc '~'
+%nonassoc '&'
+%nonassoc "<<" ">>"
+%nonassoc ".."
+%left '+' '-'
+%left '*' '/' "//" '%'
+%left "not" '#' NEG '~'
+%left '^'
 %%
+
  -- https://www.lua.org/manual/5.4/manual.html#9
 
   -- chunk ::= block
@@ -158,13 +172,12 @@ import Lexer
 
 	-- attrib ::= ['<' Name '>']
   Attrib : '<' Name '>' { AttribName $2 }
-         |              { AttribEmpty }
 
 	-- retstat ::= return [explist] [';']
-  Retstat : "return" Explist ';' { ReturnStat $2 }
-          | "return" Explist     { ReturnStat $2 }
-          | "return" ';'         { ReturnStatEmpty }
-          | "return"             { ReturnStatEmpty }
+  Retstat : "return" Explist ';' { ReturnStatExplistSimecolon $2 }
+          | "return" Explist     { ReturnStatExplist $2 }
+          | "return" ';'         { ReturnStatSimecolon }
+          | "return"             { ReturnStat }
 
 	-- label ::= '::' Name '::'
   Label : "::" Name "::" { LabelName $2 }
@@ -205,8 +218,8 @@ import Lexer
       | Functiondef { ExpFunctionDef $1 }
       | Prefixexp { ExpPrefix $1 }
       | Tableconstructor { ExpTable $1 }
-      | Exp Binop Exp { ExpBinop $1 $2 $3 }
-      | Unop Exp { ExpUnop $1 $2 }
+      | Exp Binop Exp { ExpBinop $1 }
+      | Unop Exp { ExpUnopExp $1 }
 
 	-- prefixexp ::= var | functioncall | '(' exp ')'
   Prefixexp : Var { PrefixVar $1 }
@@ -253,35 +266,201 @@ import Lexer
 	-- 	 '&' | '~' | '|' | '>>' | '<<' | '..' | 
 	-- 	 '<' | '<=' | '>' | '>=' | '==' | '~=' | 
 	-- 	 and | or
-  Binop : '+'   { Plus }
-        | '-'   { BinaryMinus }
-        | '*'   { Multiply }
-        | '/'   { Divide }
-        | "//"  { FloorDiv }
-        | '^'   { Power }
-        | '%'   { Mod }
-        | '&'   { BitwiseAnd }
-        | '~'   { BitwiseNot }
-        | '|'   { BitwiseOr }
-        | ">>"  { ShiftRight }
-        | "<<"  { ShiftLeft }
-        | ".."  { Concat }
-        | '<'   { LessThan }
-        | "<="  { LessThanEqual }
-        | '>'   { GreaterThan }
-        | ">="  { GreaterThanEqual }
-        | "=="  { Equals }
-        | "~="  { NotEquals }
-        | "and" { And }
-        | "or"  { Or }
+  Binop : '+'   { BinopPlus }
+        | '-'   { BinopBinaryMinus }
+        | '*'   { BinopMultiply }
+        | '/'   { BinopDivide }
+        | "//"  { BinopFloorDiv }
+        | '^'   { BinopPower }
+        | '%'   { BinopMod }
+        | '&'   { BinopBitwiseAnd }
+        | '~'   { BinopBitwiseNot }
+        | '|'   { BinopBitwiseOr }
+        | ">>"  { BinopShiftRight }
+        | "<<"  { BinopShiftLeft }
+        | ".."  { BinopConcat }
+        | '<'   { BinopLessThan }
+        | "<="  { BinopLessThanEqual }
+        | '>'   { BinopGreaterThan }
+        | ">="  { BinopGreaterThanEqual }
+        | "=="  { BinopEquals }
+        | "~="  { BinopNotEquals }
+        | "and" { BinopAnd }
+        | "or"  { BinopOr }
 
 	-- unop ::= '-' | not | '#' | '~'
-  Unop : '-'    { UnaryMinus }
-       | "not"  { Not }
-       | '#'    { Length }
-       | '~'    { BitwiseNot }
+  Unop : '-' %prec NEG  { UnopUnaryMinus }
+       | "not"          { UnopNot }
+       | '#'            { UnopLength }
+       | '~'            { UnopBitwiseNot }
 
 {
+
+data Grammar = 
+  -- chunk ::= block
+    ChunkBlock Grammar
+
+	-- block ::= {stat} [retstat]
+  | BlockStatListRetstat Grammar Grammar
+  | BlockStatList Grammar
+  | StatListSingle Grammar
+  | StatListCons Grammar Grammar
+
+	-- stat ::=  ';' | 
+  | StatSemicolonEmpty 
+  | StatAssignment Grammar Grammar
+  | StatFunctionCall Grammar
+  | StatLabel Grammar
+  | StatBreak
+  | StatGoto String
+  | StatDo Grammar
+  | StatWhile Grammar Grammar
+  | StatRepeat Grammar Grammar
+  | StatIf Grammar Grammar Grammar Grammar
+  | StatForNumeric String Grammar Grammar Grammar
+  | StatForNumericSimple String Grammar Grammar
+  | StatForEach Grammar Grammar Grammar
+  | StatFunction Grammar Grammar
+  | StatLocalFunction String Grammar
+  | StatLocalAttribNameList Grammar Grammar
+  | StatLocalAttribNameListSimple Grammar
+  | EmptyElseIfList
+  | ElseIfListAppend Grammar Grammar Grammar
+  | EmptyElseBlock
+  | ElseBlock Grammar
+
+	-- attnamelist ::=  Name attrib {',' Name attrib}
+  | AttnamelistCons String Grammar
+  | AttnamelistAppend String Grammar Grammar
+
+	-- attrib ::= ['<' Name '>']
+  | AttribName String
+  | AttribEmpty
+
+	-- retstat ::= return [explist] [';']
+  | ReturnStatExplistSimecolon Grammar
+  | ReturnStatExplist Grammar
+  | ReturnStatSimecolon
+  | ReturnStat
+
+	-- label ::= '::' Name '::'
+  | LabelName String
+
+	-- funcname ::= Name {'.' Name} [':' Name]
+  | FuncnameDot String
+  | FuncnameColon String Grammar String
+  | FuncnameDotListOnly String Grammar
+  | FuncnameDotSingle String
+  | FuncnameDotListAppend Grammar String
+
+	-- varlist ::= var {',' var}
+  | VarListSingle Grammar
+  | VarListCons Grammar Grammar
+
+	-- var ::=  Name | prefixexp '[' exp ']' | prefixexp '.' Name 
+  | VarName String
+  | VarBracket Grammar Grammar
+  | VarDot Grammar String
+
+	-- namelist ::= Name {',' Name}
+  | NameListSingle String
+  | NameListCons String Grammar
+
+	-- explist ::= exp {',' exp}
+  | ExpListSingle Grammar
+  | ExpListCons Grammar Grammar
+
+	-- exp ::=  nil | false | true | Numeral | LiteralString | '...' | functiondef | 
+	-- 	 prefixexp | tableconstructor | exp binop exp | unop exp 
+  | ExpNil
+  | ExpFalse
+  | ExpTrue
+  | ExpFloat Float
+  | ExpInteger Integer
+  | ExpString String
+  | ExpVararg
+  | ExpFunctionDef Grammar
+  | ExpPrefix Grammar
+  | ExpTable Grammar
+  -- Here change lua's parsing grammer. Because happy and YACC use LALR. And maybe lua use LR(0)
+  | ExpBinop Grammar
+  | ExpUnopExp Grammar
+
+	-- prefixexp ::= var | functioncall | '(' exp ')'
+  | PrefixVar Grammar
+  | PrefixFunctionCall Grammar
+  | PrefixExp Grammar
+
+	-- functioncall ::=  prefixexp args | prefixexp ':' Name args 
+  | FunctionCall Grammar Grammar
+  | FunctionCallMethod Grammar String Grammar
+
+	-- args ::=  '(' [explist] ')' | tableconstructor | LiteralString 
+  | ArgsExpList Grammar
+  | ArgsTable Grammar
+  | ArgsString String
+
+	-- functiondef ::= function funcbody
+  | FunctionDef Grammar
+
+	-- funcbody ::= '(' [parlist] ')' block end
+  | Funcbody Grammar Grammar
+
+	-- parlist ::= namelist [',' '...'] | '...'
+  | ParlistVararg Grammar
+  | ParlistOnlyVararg
+
+	-- tableconstructor ::= '{' [fieldlist] '}'
+  | TableConstructor Grammar
+
+	-- fieldlist ::= field {fieldsep field} [fieldsep]
+  | FieldListSingle Grammar
+  | FieldListCons Grammar Grammar Grammar
+  | FieldListLast Grammar Grammar
+
+	-- field ::= '[' exp ']' '=' exp | Name '=' exp | exp
+  | FieldExpKey Grammar Grammar
+  | FieldNameKey String Grammar
+  | FieldExp Grammar
+
+	-- fieldsep ::= ',' | ';'
+  | FieldsepComma
+  | FieldsepSemicolon
+
+	-- binop ::=  '+' | '-' | '*' | '/' | '//' | '^' | '%' | 
+	-- 	 '&' | '~' | '|' | '>>' | '<<' | '..' | 
+	-- 	 '<' | '<=' | '>' | '>=' | '==' | '~=' | 
+	-- 	 and | or
+  | BinopExpExp
+  | BinopPlus
+  | BinopBinaryMinus
+  | BinopMultiply
+  | BinopDivide
+  | BinopFloorDiv
+  | BinopPower
+  | BinopMod
+  | BinopBitwiseAnd
+  | BinopBitwiseNot
+  | BinopBitwiseOr
+  | BinopShiftRight
+  | BinopShiftLeft
+  | BinopConcat
+  | BinopLessThan
+  | BinopLessThanEqual
+  | BinopGreaterThan
+  | BinopGreaterThanEqual
+  | BinopEquals
+  | BinopNotEquals
+  | BinopAnd
+  | BinopOr
+
+	-- unop ::= '-' | not | '#' | '~'
+  | UnopExpExp
+  | UnopUnaryMinus
+  | UnopNot
+  | UnopLength
+  | UnopBitwiseNot
+
 parseError :: [Token] -> a
 parseError _ = error "Parse error"
 }
