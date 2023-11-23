@@ -36,7 +36,9 @@ parser1HelloWorld = TestCase $ do
                                 )
                               )
                             )
-                            
+                            StatLocalAttribNameList (
+
+                            )
                           )
                         )
                       )
