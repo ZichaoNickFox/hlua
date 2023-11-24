@@ -7,8 +7,6 @@ import Data.Word (Word8)
 import Data.Char (chr)
 import Debug.Trace (trace)
 import Numeric (readHex)
-
-#undef ALEX_DEBUG
 }
 
 $alpha      = [a-zA-Z]

@@ -9,8 +9,6 @@ import Data.Word (Word8)
 import Data.Char (chr)
 import Debug.Trace (trace)
 import Numeric (readHex)
-
-#undef ALEX_DEBUG
 #if __GLASGOW_HASKELL__ >= 603
 #include "ghcconfig.h"
 #elif defined(__GLASGOW_HASKELL__)
@@ -17580,7 +17578,7 @@ alexRightContext IBOX(sc) user__ _ _ input__ =
         -- match when checking the right context, just
         -- the first match will do.
 #endif
-{-# LINE 125 "Lexer.x" #-}
+{-# LINE 123 "Lexer.x" #-}
 data Token = 
   -- keyword
     TokenAnd

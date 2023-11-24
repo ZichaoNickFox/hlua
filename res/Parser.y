@@ -1,8 +1,6 @@
 {
 module Parser where
 import Lexer
-
-#define HAPPY_DEBUG 1
 }
 
 %name parse
@@ -126,8 +124,9 @@ import Lexer
   Chunk : Block { ChunkBlock $1 }
 
 	-- block ::= {stat} [retstat]
-  Block : StatList Retstat { BlockStatListRetstat $1 $2 }
-        | StatList { BlockStatList $1 }
+  Block :                  { BlockEmpty }
+        | StatList Retstat { BlockStatListRetstat $1 $2 }
+        | StatList         { BlockStatList $1 }
   StatList : Stat { StatListSingle $1 }
            | Stat StatList { StatListCons $1 $2 }
 
@@ -221,7 +220,7 @@ import Lexer
       | Functiondef { ExpFunctionDef $1 }
       | Prefixexp { ExpPrefix $1 }
       | Tableconstructor { ExpTable $1 }
-      | Exp Binop Exp { ExpBinop $1 }
+      | Exp Binop Exp { ExpBinop $1 $2 $3 }
       | Unop Exp { ExpUnopExp $1 }
 
 	-- prefixexp ::= var | functioncall | '(' exp ')'
@@ -242,10 +241,12 @@ import Lexer
   Functiondef : "function" Funcbody { FunctionDef $2 }
 
 	-- funcbody ::= '(' [parlist] ')' block end
-  Funcbody : '(' Parlist ')' Block "end" { Funcbody $2 $4 }
+  Funcbody : '(' ')' Block "end" { FuncbodyNoParlist $3 }
+           | '(' Parlist ')' Block "end" { FuncbodyParlist $2 $4 }
 
 	-- parlist ::= namelist [',' '...'] | '...'
-  Parlist : Namelist ',' "..." { ParlistVararg $1 }
+  Parlist : Namelist { ParlistNamelist $1 }
+          | Namelist ',' "..." { ParlistVararg $1 }
           | "..." { ParlistOnlyVararg }
 
 	-- tableconstructor ::= '{' [fieldlist] '}'
@@ -304,6 +305,7 @@ data Grammar =
     ChunkBlock Grammar
 
 	-- block ::= {stat} [retstat]
+  | BlockEmpty
   | BlockStatListRetstat Grammar Grammar
   | BlockStatList Grammar
   | StatListSingle Grammar
@@ -385,8 +387,7 @@ data Grammar =
   | ExpFunctionDef Grammar
   | ExpPrefix Grammar
   | ExpTable Grammar
-  -- Here change lua's parsing grammer. Because happy and YACC use LALR. And maybe lua use LR(0)
-  | ExpBinop Grammar
+  | ExpBinop Grammar Grammar Grammar
   | ExpUnopExp Grammar
 
 	-- prefixexp ::= var | functioncall | '(' exp ')'
@@ -407,9 +408,11 @@ data Grammar =
   | FunctionDef Grammar
 
 	-- funcbody ::= '(' [parlist] ')' block end
-  | Funcbody Grammar Grammar
+  | FuncbodyNoParlist Grammar
+  | FuncbodyParlist Grammar Grammar
 
 	-- parlist ::= namelist [',' '...'] | '...'
+  | ParlistNamelist Grammar
   | ParlistVararg Grammar
   | ParlistOnlyVararg
 
@@ -463,7 +466,7 @@ data Grammar =
   | UnopNot
   | UnopLength
   | UnopBitwiseNot
-  deriving (Show)
+  deriving (Show, Eq)
 
 parseError :: [Token] -> a
 parseError _ = error "Parse error"
