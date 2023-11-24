@@ -5,3 +5,12 @@ end
 
 greet("Alice")
 greet("Bob")
+
+function hello()
+  print("Hello")
+end
+
+local sayHello = hello()
+
+function table:func()
+end

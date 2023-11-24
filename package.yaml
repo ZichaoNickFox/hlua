@@ -23,6 +23,7 @@ dependencies:
 - base >= 4.7 && < 5
 - array >= 0.5.4.0
 - BNFC >= 2.9.5
+- optparse-applicative >= 0.18.1
 
 ghc-options:
 - -Wall
@@ -42,7 +43,7 @@ default-extensions:
   - CPP
 
 executables:
-  hlua-exe:
+  hlua:
     main:                Main.hs
     source-dirs:         app
     ghc-options:

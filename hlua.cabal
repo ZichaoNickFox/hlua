@@ -40,9 +40,10 @@ library
       BNFC >=2.9.5
     , array >=0.5.4.0
     , base >=4.7 && <5
+    , optparse-applicative >=0.18.1
   default-language: Haskell2010
 
-executable hlua-exe
+executable hlua
   main-is: Main.hs
   other-modules:
       Paths_hlua
@@ -58,6 +59,7 @@ executable hlua-exe
     , array >=0.5.4.0
     , base >=4.7 && <5
     , hlua
+    , optparse-applicative >=0.18.1
   default-language: Haskell2010
 
 test-suite hlua-test
@@ -78,4 +80,5 @@ test-suite hlua-test
     , array >=0.5.4.0
     , base >=4.7 && <5
     , hlua
+    , optparse-applicative >=0.18.1
   default-language: Haskell2010

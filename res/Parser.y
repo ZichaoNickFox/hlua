@@ -185,11 +185,12 @@ import Lexer
   Label : "::" Name "::" { LabelName $2 }
 
 	-- funcname ::= Name {'.' Name} [':' Name]
-  Funcname : Name { FuncnameDot $1 }
-           | Name FuncnameDotList ':' Name { FuncnameColon $1 $2 $4 }
+  Funcname : Name                           { FuncnameDot $1 }
+           | Name FuncnameDotList ':' Name  { FuncnameColon $1 $2 $4 }
            | Name FuncnameDotList           { FuncnameDotListOnly $1 $2 }
-  FuncnameDotList : '.' Name { FuncnameDotSingle $2 }
-                  | FuncnameDotList '.' Name { FuncnameDotListAppend $1 $3 }
+  FuncnameDotList :                           { FuncnameDotListEmpty }
+                  | '.' Name                  { FuncnameDotSingle $2 }
+                  | FuncnameDotList '.' Name  { FuncnameDotListAppend $1 $3 }
 
 	-- varlist ::= var {',' var}
   Varlist : Var { VarListSingle $1 }
@@ -233,7 +234,8 @@ import Lexer
                | Prefixexp ':' Name Args { FunctionCallMethod $1 $3 $4 }
 
 	-- args ::=  '(' [explist] ')' | tableconstructor | LiteralString 
-  Args : '(' Explist ')' { ArgsExpList $2 }
+  Args : '(' ')' { ArgsEmpty }
+       | '(' Explist ')' { ArgsExpList $2 }
        | Tableconstructor { ArgsTable $1 }
        | LiteralString { ArgsString $1 }
 
@@ -355,6 +357,7 @@ data Grammar =
   | FuncnameDot String
   | FuncnameColon String Grammar String
   | FuncnameDotListOnly String Grammar
+  | FuncnameDotListEmpty
   | FuncnameDotSingle String
   | FuncnameDotListAppend Grammar String
 
@@ -400,6 +403,7 @@ data Grammar =
   | FunctionCallMethod Grammar String Grammar
 
 	-- args ::=  '(' [explist] ')' | tableconstructor | LiteralString 
+  | ArgsEmpty
   | ArgsExpList Grammar
   | ArgsTable Grammar
   | ArgsString String
