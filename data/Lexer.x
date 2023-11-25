@@ -14,7 +14,9 @@ $digit      = [0-9]
 $hexdigit   = [0-9A-Fa-f]
 
 @identifier = [a-zA-Z_][a-zA-Z0-9_]*
-@string     = \"([^\"]|\\.)*\"
+
+@string1    = \"([^\"]|\\.)*\"
+@string2    = \'([^\']|\\.)*\'
 
 @integer1   = "0x" $hexdigit+
 @integer2   = $digit+
@@ -118,7 +120,10 @@ tokens :-
 
   -- identifier
   @identifier     { \str -> TokenIdentifier str }
-  @string         { \str -> TokenString $ (drop 1 . init) str }
+
+  -- string
+  @string1        { \str -> TokenString $ (drop 1 . init) str }
+  @string2        { \str -> TokenString $ (drop 1 . init) str }
 
 {
 data Token = 

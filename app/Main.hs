@@ -4,18 +4,18 @@ import Lexer
 import Parser
 import Options.Applicative as O
 import Data.Maybe
+import System.Directory
+import System.IO
 
 data Options = Options {
-  getFilePath :: Maybe FilePath,
-  getDirPath :: Maybe FilePath
+  filePath :: Maybe FilePath,
+  dirPath :: Maybe FilePath
 }
 
-getOptions :: IO Options
-getOptions = execParser $ info (optionsParser <**> helper) idm
-  where optionsParser :: O.Parser Options
-        optionsParser = Options
-          <$> O.optional (strOption (long "file" <> short 'f' <> metavar "FILENAME" <> help "single lua file"))
-          <*> O.optional (strOption (long "dir" <> short 'd' <> metavar "DIRECTORY" <> help "project root dir"))
+optionsParser :: O.Parser Options
+optionsParser = Options
+  <$> O.optional (strOption (long "file" <> short 'f' <> metavar "FILENAME" <> help "single lua file"))
+  <*> O.optional (strOption (long "dir" <> short 'd' <> metavar "DIRECTORY" <> help "project root dir"))
 
 parseFile :: FilePath -> IO ()
 parseFile filePath = do
@@ -24,12 +24,23 @@ parseFile filePath = do
   let ast = parse tokens
   putStrLn $ show $ length $ show ast
 
+traverseDirectory :: FilePath -> (FilePath -> IO ()) -> IO ()
+traverseDirectory root visit = do
+  contents <- getDirectoryContents root
+  let relativePaths = filter (`notElem` [".", ".."]) contents
+  let fullPaths = map (\path -> root ++ "/" ++ path) relativePaths
+  mapM_ (\fullPath -> do
+          isDirectory <- doesDirectoryExist fullPath
+          if isDirectory then
+            traverseDirectory fullPath visit
+          else
+            visit fullPath
+        ) fullPaths
+
 main :: IO ()
 main = do
-  options <- getOptions
+  options <- execParser $ info (optionsParser <**> helper) idm
 
-  let filePath = getFilePath options
-  if isJust filePath then
-    parseFile $ fromJust filePath
-  else
-    putStrLn "b"
+  case options of
+    Options { filePath = Just path } -> parseFile path
+    Options { dirPath = Just path } -> traverseDirectory path (\f -> putStrLn f >> parseFile f)

@@ -203,8 +203,8 @@ import Lexer
       | Prefixexp '.' Name { VarDot $1 $3 }
 
 	-- namelist ::= Name {',' Name}
-  Namelist : Name { NameListSingle $1 }
-           | Name ',' Namelist { NameListCons $1 $3 }
+  Namelist : Name                       { NameListSingle $1 }
+           | Name ',' Namelist          { NameListCons $1 $3 }
 
 	-- explist ::= exp {',' exp}
   Explist : Exp { ExpListSingle $1 }

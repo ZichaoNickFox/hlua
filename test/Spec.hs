@@ -65,13 +65,14 @@ parseAllOthers :: Test
 parseAllOthers = TestList $ fmap testcase fileAndHints
   where fileAndHints :: [(String, String)]
         fileAndHints = [
-                        ("test/2ifelse.lua", "Parser 2 if else")
+                        -- ("test/2ifelse.lua", "Parser 2 if else"),
                         -- ("test/3loop.lua", "Paser 3 loop"),
-                        -- ("test/4function.lua", "Paser 4 function"),
+                        ("test/4function.lua", "Paser 4 function")
                         -- ("test/5table.lua", "Parser 5 table"),
                         -- ("test/6mutileassignment.lua", "Parser 6 mutile assignment"),
                         -- ("test/7errorhandling.lua", "Parser 7 error handling"),
-                        -- ("test/8complex.lua", "Parser 8 complex")
+                        -- ("test/8complex.lua", "Parser 8 complex"),
+                        -- ("test/9string.lua", "Parser 9 string")
                        ]
         testcase (file, hint) = TestCase $ do
                                   content <- readFile file
