@@ -1,9 +1,12 @@
 # hlua
+Learning to write a lua interpreter in haskell.  
+Includes a `Lexer` and a `Parser` now.
 
-Learning writting a lua interpreter by haskell by
+# Usage
+- windows
+  - ./run.bat
+  - ./test.bat
 
-- chatgpt
-- alex
-
-# How To Use
-./run.bat
+- macos
+  - sh run.sh
+  - sh test.sh
