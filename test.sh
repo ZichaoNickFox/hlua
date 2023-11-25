@@ -1,4 +1,4 @@
-cd res
+cd data
 
 alex Lexer.x
 if [[ $? -ne 0 ]]; then

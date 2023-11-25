@@ -7,3 +7,7 @@ elseif number < 5 then
 else
     print("Number is 5.")
 end
+
+if self.ModuleLength == nil then
+  return
+end

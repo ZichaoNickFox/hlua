@@ -125,8 +125,9 @@ import Lexer
 
 	-- block ::= {stat} [retstat]
   Block :                  { BlockEmpty }
-        | StatList Retstat { BlockStatListRetstat $1 $2 }
         | StatList         { BlockStatList $1 }
+        | StatList Retstat { BlockStatListRetstat $1 $2 }
+        | Retstat          { BlockRetstate }
   StatList : Stat { StatListSingle $1 }
            | Stat StatList { StatListCons $1 $2 }
 
@@ -252,7 +253,8 @@ import Lexer
           | "..." { ParlistOnlyVararg }
 
 	-- tableconstructor ::= '{' [fieldlist] '}'
-  Tableconstructor : '{' Fieldlist '}' { TableConstructor $2 }
+  Tableconstructor : '{' '}' { TableConstructorEmpty }
+                   | '{' Fieldlist '}' { TableConstructorFieldlist $2 }
 
 	-- fieldlist ::= field {fieldsep field} [fieldsep]
   Fieldlist : Field { FieldListSingle $1 }
@@ -308,8 +310,9 @@ data Grammar =
 
 	-- block ::= {stat} [retstat]
   | BlockEmpty
-  | BlockStatListRetstat Grammar Grammar
   | BlockStatList Grammar
+  | BlockStatListRetstat Grammar Grammar
+  | BlockRetstate
   | StatListSingle Grammar
   | StatListCons Grammar Grammar
 
@@ -421,7 +424,8 @@ data Grammar =
   | ParlistOnlyVararg
 
 	-- tableconstructor ::= '{' [fieldlist] '}'
-  | TableConstructor Grammar
+  | TableConstructorEmpty
+  | TableConstructorFieldlist Grammar
 
 	-- fieldlist ::= field {fieldsep field} [fieldsep]
   | FieldListSingle Grammar

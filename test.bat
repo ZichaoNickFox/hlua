@@ -1,4 +1,4 @@
-cd res
+cd data
 
 alex Lexer.x
 IF %ERRORLEVEL% NEQ 0 EXIT

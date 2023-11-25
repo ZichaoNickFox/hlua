@@ -2,3 +2,6 @@
 *~
 *.lock
 data/Parser.info
+res
+src/Lexer.hs
+src/Parser.hs
