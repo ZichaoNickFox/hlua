@@ -7,6 +7,7 @@ import Data.Word (Word8)
 import Data.Char (chr)
 import Debug.Trace (trace)
 import Numeric (readHex)
+
 }
 
 $alpha      = [a-zA-Z]
@@ -17,6 +18,7 @@ $hexdigit   = [0-9A-Fa-f]
 
 @string1    = \"([^\"]|\\.)*\"
 @string2    = \'([^\']|\\.)*\'
+-- @string3    = \[\[(.*)?\]\]
 
 @integer1   = "0x" $hexdigit+
 @integer2   = $digit+
@@ -26,10 +28,11 @@ $hexdigit   = [0-9A-Fa-f]
 
 tokens :-
   -- whitespace
-  $white+       ;
+  $white+             ;
 
   -- comment
-  "--" [^\n]*   ;
+  "--"[^\n]*          ;
+  -- "--"\[\[(.|\n)*\]\] ;
 
   -- keyword
   -- https://www.lua.org/manual/5.4/manual.html#3.1
@@ -122,8 +125,9 @@ tokens :-
   @identifier     { \str -> TokenIdentifier str }
 
   -- string
-  @string1        { \str -> TokenString $ (drop 1 . init) str }
-  @string2        { \str -> TokenString $ (drop 1 . init) str }
+  @string1        { \str -> TokenString (read str :: String) }
+  @string2        { \str -> TokenString (read $ convertSQ2DQ str :: String) }
+  -- @string3        { \str -> TokenString $ (drop 2 . init. init) str }
 
 {
 data Token = 
@@ -231,4 +235,18 @@ alexScanTokens str = go ('\n', [], str)
         AlexSkip  inp' len     -> go inp'
         AlexToken inp' len act -> act (take len str) : go inp'
         AlexError _            -> error "lexical error"
+
+-- 1. replace single " into \"
+-- 2. replace head/last ' into \"
+convertSQ2DQ :: String -> String
+convertSQ2DQ s = let mid = (init . tail) s
+                     replaceFunc :: Char -> (String, Bool) -> (String, Bool)
+                     replaceFunc = \c acc -> case c of
+                                    '\"' -> if snd acc
+                                            then (c : acc, False)
+                                            else ('\\' : c : acc, False)
+                                    '\\' -> (c : acc, not (snd acc))
+                                    o    -> (o : acc, False)
+                     replace1 = foldr replaceFunc ([], False) mid
+                 in '\"' : mid ++ "\""
 }

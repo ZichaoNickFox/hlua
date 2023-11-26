@@ -205,6 +205,8 @@ import Lexer
 	-- namelist ::= Name {',' Name}
   Namelist : Name                       { NameListSingle $1 }
            | Name ',' Namelist          { NameListCons $1 $3 }
+          -- For "par, ...", add here
+           | "..."                      { ParlistOnlyVararg }
 
 	-- explist ::= exp {',' exp}
   Explist : Exp { ExpListSingle $1 }
@@ -249,8 +251,9 @@ import Lexer
 
 	-- parlist ::= namelist [',' '...'] | '...'
   Parlist : Namelist { ParlistNamelist $1 }
-          | Namelist ',' "..." { ParlistVararg $1 }
-          | "..." { ParlistOnlyVararg }
+          -- For "par, ...", delete here
+          -- | Namelist ',' "..." { ParlistVararg $1 }
+          -- | "..." { ParlistOnlyVararg }
 
 	-- tableconstructor ::= '{' [fieldlist] '}'
   Tableconstructor : '{' '}' { TableConstructorEmpty }
