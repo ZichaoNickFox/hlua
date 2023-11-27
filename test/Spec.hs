@@ -8,7 +8,7 @@ lexer1HelloWorldTest :: Test
 lexer1HelloWorldTest = TestCase $ do
                         content <- readFile "test/1helloworld.lua"
                         let tokens = alexScanTokens content
-                        assertEqual "Lexer 1 Hello World" tokens expectation
+                        assertEqual "Lexer 1 Hello World" expectation tokens
   where expectation :: [Token]
         expectation = [TokenIdentifier "print", TokenLeftParentheses, TokenString "Hello, world!", TokenRightParentheses,
                        TokenLocal, TokenIdentifier "x", TokenAssign, TokenInteger 5,
@@ -20,7 +20,7 @@ parser1HelloWorldTest = TestCase $ do
                           content <- readFile "test/1helloworld.lua"
                           let tokens = alexScanTokens content
                           let ast = parse tokens
-                          assertEqual "Parser 1 Hello World " ast expectation
+                          assertEqual "Parser 1 Hello World " expectation ast
   where expectation :: Grammar
         expectation = ChunkBlock (
                         BlockStatList (
@@ -66,38 +66,48 @@ lexer9StringTest :: Test
 lexer9StringTest = TestCase $ do
                     content <- readFile "test/9string.lua"
                     let tokens = alexScanTokens content
-                    -- assertEqual "Lexer 9 String" tokens expectation
-                    print tokens
-                    print expectation
+                    assertEqual "Lexer 9 String" expectation tokens
   where expectation :: [Token]
         expectation = [
-          -- TokenLocal, TokenIdentifier "a1", TokenAssign, TokenString "double quotes string",
-          -- TokenLocal, TokenIdentifier "b1", TokenAssign, TokenString "'",
-          -- TokenLocal, TokenIdentifier "c1", TokenAssign, TokenString "\"",
-          -- TokenLocal, TokenIdentifier "d1", TokenAssign, TokenString "'d1'",
-          -- TokenLocal, TokenIdentifier "e1", TokenAssign, TokenString "\"e1\"",
-          -- TokenLocal, TokenIdentifier "f1", TokenAssign, TokenString "\'f1\'",
+          TokenLocal, TokenIdentifier "a1", TokenAssign, TokenString "double quotes string",
+          TokenLocal, TokenIdentifier "b1", TokenAssign, TokenString "'",
+          TokenLocal, TokenIdentifier "c1", TokenAssign, TokenString "\"",
+          TokenLocal, TokenIdentifier "d1", TokenAssign, TokenString "'d1'",
+          TokenLocal, TokenIdentifier "e1", TokenAssign, TokenString "\"e1\"",
+          TokenLocal, TokenIdentifier "f1", TokenAssign, TokenString "\'f1\'",
+          TokenLocal, TokenIdentifier "g1", TokenAssign, TokenString "\\",
+          TokenLocal, TokenIdentifier "h1", TokenAssign, TokenLeftBrace, TokenLeftBracket, TokenString "\\", TokenRightBracket, TokenAssign, TokenString "h1", TokenRightBrace,
 
           TokenLocal, TokenIdentifier "a2", TokenAssign, TokenString "single quotes string",
           TokenLocal, TokenIdentifier "b2", TokenAssign, TokenString "\'",
           TokenLocal, TokenIdentifier "c2", TokenAssign, TokenString "\"",
           TokenLocal, TokenIdentifier "d2", TokenAssign, TokenString "\"d2\"",
-          TokenLocal, TokenIdentifier "e2", TokenAssign, TokenString "\"e2\""]
-          -- TokenLocal, TokenIdentifier "f2", TokenAssign, TokenString "'f2'",
-          -- TokenLocal, TokenIdentifier "g2", TokenAssign, TokenString "\\"]
-          -- TokenLocal, TokenIdentifier "h2", TokenAssign, TokenString ""\\"]
+          TokenLocal, TokenIdentifier "e2", TokenAssign, TokenString "\"e2\"",
+          TokenLocal, TokenIdentifier "f2", TokenAssign, TokenString "'f2'",
+          TokenLocal, TokenIdentifier "g2", TokenAssign, TokenString "\\",
+          TokenLocal, TokenIdentifier "h2", TokenAssign, TokenLeftBrace, TokenLeftBracket, TokenString "\\", TokenRightBracket, TokenAssign, TokenString "h2", TokenRightBrace,
 
-parseAllOthers :: Test
-parseAllOthers = TestList $ fmap testcase fileAndHints
+          TokenLocal, TokenIdentifier "a3", TokenAssign, TokenString "long string",
+          TokenLocal, TokenIdentifier "b3", TokenAssign, TokenString "\'",
+          TokenLocal, TokenIdentifier "c3", TokenAssign, TokenString "\"",
+          TokenLocal, TokenIdentifier "d3", TokenAssign, TokenString "\"d3\"",
+          TokenLocal, TokenIdentifier "e3", TokenAssign, TokenString "\"e3\"",
+          TokenLocal, TokenIdentifier "f3", TokenAssign, TokenString "'f3'",
+          TokenLocal, TokenIdentifier "g3", TokenAssign, TokenString "\\",
+          TokenLocal, TokenIdentifier "h3", TokenAssign, TokenLeftBrace, TokenLeftBracket, TokenString "\\", TokenRightBracket, TokenAssign, TokenString "h3", TokenRightBrace,
+          TokenLocal, TokenIdentifier "i3", TokenAssign, TokenString "\"\'\\n"
+          ]
+
+parseAllOthersTest :: Test
+parseAllOthersTest = TestList $ fmap testcase fileAndHints
   where fileAndHints :: [(String, String)]
         fileAndHints = [
-                        -- ("test/2ifelse.lua", "Parser 2 if else"),
-                        -- ("test/3loop.lua", "Paser 3 loop"),
-                        -- ("test/4function.lua", "Paser 4 function")
-                        -- ("test/5table.lua", "Parser 5 table"),
-                        -- ("test/6mutileassignment.lua", "Parser 6 mutile assignment"),
-                        -- ("test/7errorhandling.lua", "Parser 7 error handling"),
-                        -- ("test/8complex.lua", "Parser 8 complex"),
+                        ("test/2ifelse.lua", "Parser 2 if else"),
+                        ("test/3loop.lua", "Paser 3 loop"),
+                        ("test/4function.lua", "Paser 4 function"),
+                        ("test/5table.lua", "Parser 5 table"), ("test/6mutileassignment.lua", "Parser 6 mutile assignment"),
+                        ("test/7errorhandling.lua", "Parser 7 error handling"),
+                        ("test/8complex.lua", "Parser 8 complex"),
                         ("test/9string.lua", "Parser 9 string")
                        ]
         testcase (file, hint) = TestCase $ do
@@ -107,21 +117,11 @@ parseAllOthers = TestList $ fmap testcase fileAndHints
                                   let ast = parse tokens
                                   print $ length $ show ast
 
-convertSQ2DQTest :: Test
-convertSQ2DQTest = do
-  assertEqual (convertSQ2DQTest '"') "\"\\\"\""
-  assertEqual (convertSQ2DQTest '\"') "\"\\\"\""
-  assertEqual (convertSQ2DQTest '\'') "\"\'\""
-  assertEqual (convertSQ2DQTest '"""') "\"\\\"\\\"\\\"\""
-  assertEqual (convertSQ2DQTest '\""\"') "\"\\\"\\\"\\\"\""
-  assertEqual (convertSQ2DQTest '\\\'') "\"\\'\""
-
 main :: IO ()
 main = runTestTT (TestList testlist) >>= print
   where testlist = [
-          convertSQ2DQTest
-          -- lexer9StringTest
-          -- lexer1HelloWorldTest,
-          -- parser1HelloWorldTest,
-          -- parseAllOthersTest,
+          lexer1HelloWorldTest,
+          parser1HelloWorldTest,
+          parseAllOthersTest,
+          lexer9StringTest
           ]

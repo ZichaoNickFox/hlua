@@ -6,6 +6,7 @@ import Options.Applicative as O
 import Data.Maybe
 import System.Directory
 import System.IO
+import System.FilePath
 
 data Options = Options {
   filePath :: Maybe FilePath,
@@ -14,8 +15,8 @@ data Options = Options {
 
 optionsParser :: O.Parser Options
 optionsParser = Options
-  <$> O.optional (strOption (long "file" <> short 'f' <> metavar "FILENAME" <> help "single lua file"))
-  <*> O.optional (strOption (long "dir" <> short 'd' <> metavar "DIRECTORY" <> help "project root dir"))
+  <$> O.optional (strOption (long "file" <> metavar "FILENAME" <> help "single lua file"))
+  <*> O.optional (strOption (long "dir" <> metavar "DIRECTORY" <> help "project root dir"))
 
 parseFile :: FilePath -> IO ()
 parseFile filePath = do
@@ -28,7 +29,7 @@ traverseDirectory :: FilePath -> (FilePath -> IO ()) -> IO ()
 traverseDirectory root visit = do
   contents <- getDirectoryContents root
   let relativePaths = filter (`notElem` [".", ".."]) contents
-  let fullPaths = map (\path -> root ++ "/" ++ path) relativePaths
+  let fullPaths = map (combine root) relativePaths
   mapM_ (\fullPath -> do
           isDirectory <- doesDirectoryExist fullPath
           if isDirectory then

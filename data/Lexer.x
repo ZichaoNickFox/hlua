@@ -16,9 +16,10 @@ $hexdigit   = [0-9A-Fa-f]
 
 @identifier = [a-zA-Z_][a-zA-Z0-9_]*
 
-@string1    = \"([^\"]|\\.)*\"
-@string2    = \'([^\']|\\.)*\'
--- @string3    = \[\[(.*)?\]\]
+@string1    = \"([^\"\\]|(\\.))*\"
+@string2    = \'([^\'\\]|(\\.))*\'
+-- FIXME : Not support '[' and ']' in long string
+@string3    = \[\[[^\[\]]*\]\]
 
 @integer1   = "0x" $hexdigit+
 @integer2   = $digit+
@@ -126,8 +127,8 @@ tokens :-
 
   -- string
   @string1        { \str -> TokenString (read str :: String) }
-  @string2        { \str -> TokenString (read $ convertSQ2DQ str :: String) }
-  -- @string3        { \str -> TokenString $ (drop 2 . init. init) str }
+  @string2        { \str -> TokenString (read $ convertLuaSQ2DQ str :: String) }
+  @string3        { \str -> TokenString $ (drop 2 . init. init) str }
 
 {
 data Token = 
@@ -238,15 +239,17 @@ alexScanTokens str = go ('\n', [], str)
 
 -- 1. replace single " into \"
 -- 2. replace head/last ' into \"
-convertSQ2DQ :: String -> String
-convertSQ2DQ s = let mid = (init . tail) s
-                     replaceFunc :: Char -> (String, Bool) -> (String, Bool)
-                     replaceFunc = \c acc -> case c of
-                                    '\"' -> if snd acc
-                                            then (c : acc, False)
-                                            else ('\\' : c : acc, False)
-                                    '\\' -> (c : acc, not (snd acc))
-                                    o    -> (o : acc, False)
-                     replace1 = foldr replaceFunc ([], False) mid
-                 in '\"' : mid ++ "\""
+convertLuaSQ2DQ :: String -> String
+convertLuaSQ2DQ s = let mid = (init . tail) s
+                        replaceFunc :: (String, Bool) -> Char -> (String, Bool)
+                        replaceFunc = \(acc, begunBackslash) c -> case c of
+                                                                    '\"' -> if begunBackslash
+                                                                            then (c : acc, False)
+                                                                            -- foldl and reverse whose string in the end
+                                                                            else (c : '\\' : acc, False)
+                                                                    '\\' -> (c : acc, not begunBackslash)
+                                                                    o    -> (o : acc, False)
+                        replace1 = reverse $ fst $ foldl replaceFunc ([], False) mid
+                        replace2 = '\"' : replace1 ++ "\""
+                    in  replace2
 }

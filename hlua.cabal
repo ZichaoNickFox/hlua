@@ -41,6 +41,7 @@ library
     , array >=0.5.4.0
     , base >=4.7 && <5
     , directory >=1.3.8.1
+    , filepath >=1.4.100.1
     , optparse-applicative >=0.18.1
   default-language: Haskell2010
 
@@ -60,6 +61,7 @@ executable hlua
     , array >=0.5.4.0
     , base >=4.7 && <5
     , directory >=1.3.8.1
+    , filepath >=1.4.100.1
     , hlua
     , optparse-applicative >=0.18.1
   default-language: Haskell2010
@@ -82,6 +84,7 @@ test-suite hlua-test
     , array >=0.5.4.0
     , base >=4.7 && <5
     , directory >=1.3.8.1
+    , filepath >=1.4.100.1
     , hlua
     , optparse-applicative >=0.18.1
   default-language: Haskell2010
