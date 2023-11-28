@@ -24,4 +24,12 @@ local e3 = [["e3"]]
 local f3 = [['f3']]
 local g3 = [[\]]
 local h3 = {[ [[\]]]=[[h3]]}
-local i3 = [["'\n]]
+local i3 = [["'\n[[[][[]]
+local j3 = [[
+  "hello"
+]]
+local k3 = [[
+  "hello" ][[]a [][]
+]]
+local l3 = [[
+  "hello" ][[]a [][] ]]

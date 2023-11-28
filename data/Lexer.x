@@ -16,10 +16,12 @@ $hexdigit   = [0-9A-Fa-f]
 
 @identifier = [a-zA-Z_][a-zA-Z0-9_]*
 
+-- ""
 @string1    = \"([^\"\\]|(\\.))*\"
+-- ''
 @string2    = \'([^\'\\]|(\\.))*\'
--- FIXME : Not support '[' and ']' in long string
-@string3    = \[\[[^\[\]]*\]\]
+-- [[]]
+@string3    = \[\[([^\]]|\n|\]\n|\][^\]])*\]\]
 
 @integer1   = "0x" $hexdigit+
 @integer2   = $digit+
@@ -33,7 +35,7 @@ tokens :-
 
   -- comment
   "--"[^\n]*          ;
-  -- "--"\[\[(.|\n)*\]\] ;
+  "--"@string3        ;
 
   -- keyword
   -- https://www.lua.org/manual/5.4/manual.html#3.1

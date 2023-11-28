@@ -95,7 +95,10 @@ lexer9StringTest = TestCase $ do
           TokenLocal, TokenIdentifier "f3", TokenAssign, TokenString "'f3'",
           TokenLocal, TokenIdentifier "g3", TokenAssign, TokenString "\\",
           TokenLocal, TokenIdentifier "h3", TokenAssign, TokenLeftBrace, TokenLeftBracket, TokenString "\\", TokenRightBracket, TokenAssign, TokenString "h3", TokenRightBrace,
-          TokenLocal, TokenIdentifier "i3", TokenAssign, TokenString "\"\'\\n"
+          TokenLocal, TokenIdentifier "i3", TokenAssign, TokenString "\"\'\\n[[[][[",
+          TokenLocal, TokenIdentifier "j3", TokenAssign, TokenString "\n  \"hello\"\n",
+          TokenLocal, TokenIdentifier "k3", TokenAssign, TokenString "\n  \"hello\" ][[]a [][]\n",
+          TokenLocal, TokenIdentifier "l3", TokenAssign, TokenString "\n  \"hello\" ][[]a [][] "
           ]
 
 parseAllOthersTest :: Test
@@ -117,11 +120,19 @@ parseAllOthersTest = TestList $ fmap testcase fileAndHints
                                   let ast = parse tokens
                                   print $ length $ show ast
 
+lexer10CommentTest :: Test
+lexer10CommentTest = TestCase $ do
+                      content <- readFile "test/10comment.lua"
+                      let tokens = alexScanTokens content
+                      assertEqual "Lexer 10 Comment" expectation tokens
+  where expectation = []
+
 main :: IO ()
 main = runTestTT (TestList testlist) >>= print
   where testlist = [
           lexer1HelloWorldTest,
           parser1HelloWorldTest,
           parseAllOthersTest,
-          lexer9StringTest
+          lexer9StringTest,
+          lexer10CommentTest
           ]

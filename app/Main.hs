@@ -7,6 +7,7 @@ import Data.Maybe
 import System.Directory
 import System.IO
 import System.FilePath
+import Data.List (isSuffixOf)
 
 data Options = Options {
   filePath :: Maybe FilePath,
@@ -20,22 +21,26 @@ optionsParser = Options
 
 parseFile :: FilePath -> IO ()
 parseFile filePath = do
-  content <- readFile filePath
+  handle <- openFile filePath ReadMode
+  hSetEncoding handle utf8
+  content <- hGetContents handle
   let tokens = alexScanTokens content
   let ast = parse tokens
   putStrLn $ show $ length $ show ast
 
-traverseDirectory :: FilePath -> (FilePath -> IO ()) -> IO ()
-traverseDirectory root visit = do
+traverseDirectory :: FilePath -> (FilePath -> Bool) -> (FilePath -> IO ()) -> IO ()
+traverseDirectory root filterFile visitFile = do
   contents <- getDirectoryContents root
   let relativePaths = filter (`notElem` [".", ".."]) contents
   let fullPaths = map (combine root) relativePaths
   mapM_ (\fullPath -> do
           isDirectory <- doesDirectoryExist fullPath
           if isDirectory then
-            traverseDirectory fullPath visit
+            traverseDirectory fullPath filterFile visitFile
+          else if filterFile fullPath then
+            visitFile fullPath
           else
-            visit fullPath
+            return ()
         ) fullPaths
 
 main :: IO ()
@@ -44,4 +49,4 @@ main = do
 
   case options of
     Options { filePath = Just path } -> parseFile path
-    Options { dirPath = Just path } -> traverseDirectory path (\f -> putStrLn f >> parseFile f)
+    Options { dirPath = Just path } -> traverseDirectory path (isSuffixOf ".lua" $ ) (\f -> putStrLn f >> parseFile f)

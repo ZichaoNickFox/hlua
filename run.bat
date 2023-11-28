@@ -20,5 +20,5 @@ move Parser.hs ../src/Parser.hs
 
 cd ..
 
-@REM stack run -- --dir res\Script 
-stack run -- --file res\Script\Logic\BP_XHUD_C.lua
+stack run -- --dir res\Script
+@REM stack run -- --file res\Script\IntelliSense\Blueprints\WBP_CheatManager.lua
